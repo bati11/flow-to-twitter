@@ -118,7 +118,7 @@ def tweet(content)
     config.consumer_key        = twitter_consumer_key
     config.consumer_secret     = twitter_consumer_secret
     config.access_token        = twitter_access_token
-    config.access_token_secret = twitter_consumer_secret
+    config.access_token_secret = twitter_access_token_secret
   end
   client.update(content)
 end
