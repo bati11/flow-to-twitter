@@ -127,7 +127,13 @@ def read_last_etag
   begin
     redis.get "event_etag"
   rescue
-    nil
+    if File.exist?("event_etag")
+      File.open("event_etag") {|f|
+        f.read
+      }
+    else
+      nil
+    end
   end
 end
 
@@ -136,7 +142,7 @@ def save_etag(etag)
     begin
       redis.set "event_etag", etag
     rescue
-      nil
+      File.write("event_etag", etag)
     end
   end
 end
