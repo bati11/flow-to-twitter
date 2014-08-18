@@ -175,5 +175,7 @@ if response.code.to_i == 200
     tweet(s)
   }
   save_etag(etag)
+elsif response.code.to_i != 304
+  raise "GitHub API Error. http_status_code: #{response.code}"
 end
 
