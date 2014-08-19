@@ -5,19 +5,19 @@ require 'twitter'
 require 'redis'
 require 'date'
 
-def download_events(etag)
+def download_events
   github_oauth_token = ENV['GITHUB_OAUTH_TOKEN']
   github_user = ENV['GITHUB_USER']
   https = Net::HTTP.new('api.github.com',443)
   https.use_ssl = true
   https.start {
-    header = etag.nil? ? {} : {"If-None-Match" => etag}
-    https.get("/users/#{github_user}/received_events?access_token=#{github_oauth_token}", header)
+    https.get("/users/#{github_user}/received_events?access_token=#{github_oauth_token}")
   }
 end
 
 def to_array(s)
   JSON.parse(s).map {|json|
+    created_at = json["created_at"]
     user = json["actor"]["login"]
     repo = json["repo"]["name"]
     type = json["type"].sub(/Event$/, "")
@@ -102,6 +102,7 @@ def to_array(s)
       url = "https://github.com/#{repo}"
     end
     {
+      created_at: created_at,
       content: content,
       url: url
     }
@@ -123,12 +124,12 @@ def tweet(content)
   client.update(content)
 end
 
-def read_last_etag
+def read_previous_created_at
   begin
-    redis.get "event_etag"
+    redis.get "last_event_created_at"
   rescue
-    if File.exist?("event_etag")
-      File.open("event_etag") {|f|
+    if File.exist?("last_event_created_at")
+      File.open("last_event_created_at") {|f|
         f.read
       }
     else
@@ -137,12 +138,12 @@ def read_last_etag
   end
 end
 
-def save_etag(etag)
-  unless etag.nil?
+def save_last_created_at(created_at)
+  unless created_at.nil?
     begin
-      redis.set "event_etag", etag
+      redis.set "last_event_created_at", created_at
     rescue
-      File.write("event_etag", etag)
+      File.write("last_event_created_at", created_at)
     end
   end
 end
@@ -158,24 +159,31 @@ end
 
 
 
-response = download_events(read_last_etag)
+response = download_events
 if response.code.to_i == 200
-  etag = response['ETag']
-  events = to_array(response.body).reject{|x| x.nil?}
-  events.each{|entry|
+  previous_created_at = read_previous_created_at
+  events =
+    to_array(response.body).reject {|event|
+      event.nil?
+    }.select {|event|
+      f = "%Y-%m-%dT%H:%M:%SZ"
+      previous_created_at.nil? ||
+        (Date.strptime(event[:created_at], f) > Date.strptime(previous_created_at, f))
+    }
+  events.each {|event|
     url_limit = 23 # t.co length
     lf_length = 2  # \n length
     s =
-      if entry[:content].size > (140 - url_limit - lf_length)
-        n = entry[:content].size - (140 - url_limit - lf_length)
-        entry[:content][0, entry[:content].size - n] + "\n" + entry[:url]
+      if event[:content].size > (140 - url_limit - lf_length)
+        n = event[:content].size - (140 - url_limit - lf_length)
+        event[:content][0, event[:content].size - n] + "\n" + event[:url]
       else
-        entry[:content] + "\n" + entry[:url]
+        event[:content] + "\n" + event[:url]
       end
     tweet(s)
   }
-  save_etag(etag)
-elsif response.code.to_i != 304
+  save_last_created_at(events.first[:created_at]) unless events.empty?
+else
   raise "GitHub API Error. http_status_code: #{response.code}"
 end
 
