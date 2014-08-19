@@ -16,7 +16,7 @@ def download_events
 end
 
 def to_array(s)
-  JSON.parse(s).map {|json|
+  xs = JSON.parse(s).map {|json|
     created_at = json["created_at"]
     user = json["actor"]["login"]
     repo = json["repo"]["name"]
@@ -107,6 +107,7 @@ def to_array(s)
       url: url
     }
   }
+  xs.reverse
 end
 
 def tweet(content)
@@ -182,7 +183,7 @@ if response.code.to_i == 200
       end
     tweet(s)
   }
-  save_last_created_at(events.first[:created_at]) unless events.empty?
+  save_last_created_at(events.last[:created_at]) unless events.empty?
 else
   raise "GitHub API Error. http_status_code: #{response.code}"
 end
