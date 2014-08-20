@@ -1,0 +1,27 @@
+{
+    "name": "Flow to Twitter",
+    "repository": "https://github.com/jane-doe/small-sharp-too://github.com/bati11/flow-to-twitter",
+    "env": {
+      "GITHUB_OAUTH_TOKEN": {
+        "description": "Your GitHub API OAuth Token."
+      },
+      "GITHUB_USER": {
+        "description": "Your GitHub user name."
+      },
+      "TWITTER_CONSUMER_KEY_FOR_GITHUB": {
+        "description": "Twitter consumer key that is target of flow."
+      },
+      "TWITTER_CONSUMER_SECRET_FOR_GITHUB": {
+        "description": "Twitter consumer secret that is target of flow."
+      },
+      "TWITTER_ACCESS_TOKEN_FOR_GITHUB": {
+        "description": "Twitter access Token that is target of flow."
+      },
+      "TWITTER_ACCESS_TOKEN_SECRET_FOR_GITHUB": {
+        "description": "Twitter access Token secret that is target of flow."
+      }
+    }
+    "addons": [
+      "scheduler:standard"
+    ]
+}
