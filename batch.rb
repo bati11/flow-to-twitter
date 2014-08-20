@@ -4,8 +4,8 @@ require 'json'
 require 'twitter'
 
 def download_events
-  github_oauth_token = ENV['GITHUB_OAUTH_TOKEN']
   github_user = ENV['GITHUB_USER']
+  github_oauth_token = ENV['GITHUB_PERSONAL_ACCESS_TOKEN']
   https = Net::HTTP.new('api.github.com',443)
   https.use_ssl = true
   https.start {

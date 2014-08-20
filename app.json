@@ -2,11 +2,11 @@
     "name": "Flow to Twitter",
     "repository": "https://github.com/jane-doe/small-sharp-too://github.com/bati11/flow-to-twitter",
     "env": {
-      "GITHUB_OAUTH_TOKEN": {
-        "description": "your github api oauth token."
-      },
       "GITHUB_USER": {
         "description": "your github user name."
+      },
+      "GITHUB_PERSONAL_ACCESS_TOKEN": {
+        "description": "your github personal access token."
       },
       "TWITTER_CONSUMER_KEY_FOR_GITHUB": {
         "description": "your twitter bot's consumer key."

@@ -23,8 +23,8 @@ class App < Sinatra::Base
     }
 
     github_variables = %w[
-      GITHUB_OAUTH_TOKEN
       GITHUB_USER
+      GITHUB_PERSONAL_ACCESS_TOKEN
     ]
     github_list = github_variables.map {|x|
       {
