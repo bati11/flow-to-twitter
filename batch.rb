@@ -3,7 +3,6 @@ require 'net/https'
 require 'json'
 require 'twitter'
 require 'redis'
-require 'date'
 
 def download_events
   github_oauth_token = ENV['GITHUB_OAUTH_TOKEN']
@@ -167,9 +166,8 @@ if response.code.to_i == 200
     to_array(response.body).reject {|event|
       event.nil?
     }.select {|event|
-      f = "%Y-%m-%dT%H:%M:%SZ"
       previous_created_at.nil? ||
-        (Date.strptime(event[:created_at], f) > Date.strptime(previous_created_at, f))
+        (DateTime.parse(event[:created_at]) > DateTime.parse(previous_created_at))
     }
   events.each {|event|
     url_limit = 23 # t.co length
