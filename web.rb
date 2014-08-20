@@ -33,17 +33,9 @@ class App < Sinatra::Base
       }
     }
 
-    redis_list = [
-      {
-        name: "REDISTOGO_URL",
-        status: !ENV["REDISTOGO_URL"].nil?
-      }
-    ]
-
     @list = [
       {label: "Twitter", list: twitter_list},
-      {label: "GitHub", list: github_list},
-      {label: "Redis", list: redis_list}
+      {label: "GitHub", list: github_list}
     ]
     erb :index
   end

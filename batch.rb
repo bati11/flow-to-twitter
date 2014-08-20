@@ -2,7 +2,6 @@
 require 'net/https'
 require 'json'
 require 'twitter'
-require 'redis'
 
 def download_events
   github_oauth_token = ENV['GITHUB_OAUTH_TOKEN']
@@ -26,134 +25,110 @@ def to_array(s)
     payload = json["payload"]
     case type
     when "CommitComment"
-      short_type = "[CC]"
-      content = short_type + content
+      short_type = "CommitComment"
       url = payload["comment"]["html_url"]
     when "Create"
-      short_type = "[C]"
+      short_type = "Create"
       ref_type = payload["ref_type"]
-      content = short_type + content + "\n#{ref_type}"
+      content += "\n#{ref_type}"
       url = "https://github.com/#{repo}"
     when "Delete"
-      short_type = "[D]"
+      short_type = "Delete"
       ref_type = payload["ref_type"]
-      content = short_type + content + "\n#{ref_type}"
+      content += "\n#{ref_type}"
       url = "https://github.com/#{repo}"
     when "Fork"
-      short_type = "[F]"
+      short_type = "Fork"
       full_name = payload["forkee"]["full_name"]
-      content = short_type + content + "\n#{full_name}"
+      content += "\n#{full_name}"
       url = payload["forkee"]["html_url"]
     when "Gollum"
-      short_type = "[G]"
-      content = short_type + content
+      short_type = "Gollum"
       url = "https://github.com/#{repo}/wiki"
     when "IssueComment"
-      short_type = "[IC]"
+      short_type = "IssueComment"
       issue_title = payload["issue"]["title"]
-      content = short_type + content + "\n\"#{issue_title}\""
+      content += "\n\"#{issue_title}\""
       url = payload["comment"]["html_url"]
     when "Issues"
-      short_type = "[I]"
+      short_type = "Issues"
       action = payload["action"]
       issue_title = payload["issue"]["title"]
-      content = short_type + content + "\n#{action}\n\"#{issue_title}\""
+      content += "\n#{action} \"#{issue_title}\""
       url = payload["issue"]["html_url"]
     when "Member"
-      short_type = "[M]"
+      short_type = "Member"
       action = payload["action"]
       acted_user = payload["member"]["login"]
-      content = short_type + content + "\n#{action}\n#{acted_user}"
+      content += "\n#{action} \"#{acted_user}\""
       url = "https://github.com/#{repo}"
     when "PullRequest"
-      short_type = "[PR]"
+      short_type = "PR"
       action = payload["action"]
       title = payload["pull_request"]["title"]
-      content = short_type + content + "\n#{action}\n\"#{title}\""
+      content += "\n#{action} \"#{title}\""
       url = payload["pull_request"]["html_url"]
     when "PullRequestReviewComment"
-      short_type = "[PRRC]"
+      short_type = "PRReviewComment"
       action = payload["action"]
       pull_request_title = payload["pull_request"]["title"]
-      content = short_type + content + "\n#{action}\n\"#{pull_request_title}\""
+      content += "\n#{action} \"#{pull_request_title}\""
       url = payload["comment"]["html_url"]
     when "Push"
-      short_type = "[P]"
+      short_type = "Push"
       before = payload["before"].slice(0, 10)
       head = payload["head"].slice(0, 10)
-      content = short_type + content
       url = "https://github.com/#{repo}/compare/#{before}...#{head}"
     when "Release"
-      short_type = "[R]"
+      short_type = "Release"
       action = payload["action"]
       tag_name = payload["release"]["tag_name"]
-      content = short_type + content + "\n#{action}\n#{tag_name}"
+      content += "\n#{action} \"#{tag_name}\""
       url = payload["release"]["html_url"]
     when "TeamAdd"
-      short_type = "[T]"
+      short_type = "TeamAdd"
       team_name = payload["team"]["name"]
-      content = short_type + content + "\n#{team_name}"
+      content += "\n#{team_name}"
       url = "https://github.com/#{repo}"
     when "Watch"
-      short_type = "[W]"
+      short_type = "Watch"
       action = payload["action"]
-      content = short_type + content + "\n#{action}"
+      content += "\n#{action}"
       url = "https://github.com/#{repo}"
     end
     {
       created_at: created_at,
-      content: content,
+      content: "#{created_at} [#{short_type}]\n#{content}",
       url: url
     }
   }
   xs.reverse
 end
 
-def tweet(content)
+def new_twitter_client
   twitter_consumer_key = ENV['TWITTER_CONSUMER_KEY']
   twitter_consumer_secret = ENV['TWITTER_CONSUMER_SECRET']
   twitter_access_token = ENV['TWITTER_ACCESS_TOKEN']
   twitter_access_token_secret = ENV['TWITTER_ACCESS_TOKEN_SECRET']
 
-  client = Twitter::REST::Client.new do |config|
+  Twitter::REST::Client.new do |config|
     config.consumer_key        = twitter_consumer_key
     config.consumer_secret     = twitter_consumer_secret
     config.access_token        = twitter_access_token
     config.access_token_secret = twitter_access_token_secret
   end
-  client.update(content)
 end
 
-def read_previous_created_at
-  begin
-    redis.get "last_event_created_at"
-  rescue
-    if File.exist?("last_event_created_at")
-      File.open("last_event_created_at") {|f|
-        f.read
-      }
-    else
-      nil
-    end
-  end
+def tweet(twitter_client, content)
+  twitter_client.update(content)
 end
 
-def save_last_created_at(created_at)
-  unless created_at.nil?
-    begin
-      redis.set "last_event_created_at", created_at
-    rescue
-      File.write("last_event_created_at", created_at)
-    end
-  end
-end
-
-def redis
-  if ENV["REDISTOGO_URL"].nil?
-    Redis.new host:"127.0.0.1", port:"6379"
+def read_previous_created_at(twitter_client)
+  timeline = twitter_client.home_timeline
+  if timeline.empty?
+    '2000-01-01T00:00:00Z'
   else
-    uri = URI.parse(ENV["REDISTOGO_URL"])
-    Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
+    timeline.first.text.split(' ').first
   end
 end
 
@@ -161,7 +136,8 @@ end
 
 response = download_events
 if response.code.to_i == 200
-  previous_created_at = read_previous_created_at
+  twitter_client = new_twitter_client
+  previous_created_at = read_previous_created_at(twitter_client)
   events =
     to_array(response.body).reject {|event|
       event.nil?
@@ -169,19 +145,19 @@ if response.code.to_i == 200
       previous_created_at.nil? ||
         (DateTime.parse(event[:created_at]) > DateTime.parse(previous_created_at))
     }
+  tco_length = 23 # t.co length
+  lf_length = 2  # \n length
+  text_limit_size = 140 - tco_length - lf_length
   events.each {|event|
-    url_limit = 23 # t.co length
-    lf_length = 2  # \n length
-    s =
-      if event[:content].size > (140 - url_limit - lf_length)
-        n = event[:content].size - (140 - url_limit - lf_length)
+    text =
+      if event[:content].size > text_limit_size
+        n = event[:content].size - text_limit_size
         event[:content][0, event[:content].size - n] + "\n" + event[:url]
       else
         event[:content] + "\n" + event[:url]
       end
-    tweet(s)
+    tweet(twitter_client, text)
   }
-  save_last_created_at(events.last[:created_at]) unless events.empty?
 else
   raise "GitHub API Error. http_status_code: #{response.code}"
 end
