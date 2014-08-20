@@ -106,10 +106,10 @@ def to_array(s)
 end
 
 def new_twitter_client
-  twitter_consumer_key = ENV['TWITTER_CONSUMER_KEY']
-  twitter_consumer_secret = ENV['TWITTER_CONSUMER_SECRET']
-  twitter_access_token = ENV['TWITTER_ACCESS_TOKEN']
-  twitter_access_token_secret = ENV['TWITTER_ACCESS_TOKEN_SECRET']
+  twitter_consumer_key = ENV['TWITTER_CONSUMER_KEY_FOR_GITHUB']
+  twitter_consumer_secret = ENV['TWITTER_CONSUMER_SECRET_FOR_GITHUB']
+  twitter_access_token = ENV['TWITTER_ACCESS_TOKEN_FOR_GITHUB']
+  twitter_access_token_secret = ENV['TWITTER_ACCESS_TOKEN_SECRET_FOR_GITHUB']
 
   Twitter::REST::Client.new do |config|
     config.consumer_key        = twitter_consumer_key

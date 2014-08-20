@@ -10,10 +10,10 @@ class App < Sinatra::Base
 
   get '/' do
     twitter_variables = %w[
-      TWITTER_CONSUMER_KEY
-      TWITTER_CONSUMER_SECRET
-      TWITTER_ACCESS_TOKEN
-      TWITTER_ACCESS_TOKEN_SECRET
+      TWITTER_CONSUMER_KEY_FOR_GITHUB
+      TWITTER_CONSUMER_SECRET_FOR_GITHUB
+      TWITTER_ACCESS_TOKEN_FOR_GITHUB
+      TWITTER_ACCESS_TOKEN_SECRET_FOR_GITHUB
     ]
     twitter_list = twitter_variables.map {|x|
       {
