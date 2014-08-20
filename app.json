@@ -1,6 +1,5 @@
 {
     "name": "Flow to Twitter",
-    "repository": "https://github.com/jane-doe/small-sharp-too://github.com/bati11/flow-to-twitter",
     "env": {
       "GITHUB_USER": {
         "description": "your github user name."
