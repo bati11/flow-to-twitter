@@ -20,7 +20,7 @@
       "TWITTER_ACCESS_TOKEN_SECRET_FOR_GITHUB": {
         "description": "Twitter access Token secret that is target of flow."
       }
-    }
+    },
     "addons": [
       "scheduler:standard"
     ]
