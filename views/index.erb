@@ -12,33 +12,45 @@
   .container table {
     margin: 0 auto 0;
   }
+  .code {
+    background-color: #E0E0E0;
+    padding: 0.5em;
+  }
 </style>
 </head>
 <body class="pure-g">
 <div class="pure-u-1 container">
   <h1>Flow to Twitter</h1>
-  <p>Please set the following environment variables.</p>
-  <% @list.each do |x| %>
   <div>
-    <h2><%= x[:label] %></h2>
-    <table class="pure-table">
-      <thead>
-        <tr>
-          <th>VARIABLE</th>
-          <th>STATUS</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% x[:list].each do |y| %>
-        <tr>
-          <td><%= y[:name] %></td>
-          <td><%= y[:status] ? "OK" : "Not Set" %></td>
-        </tr>
-        <% end %>
-      </tbody>
-    </table>
+    <h2>Scheduler</h2>
+    <p>Please scheduling following command.</p>
+    <p><span class="code">$ ruby batch.rb</span></p>
   </div>
-  <% end %>
+  <div>
+    <h2>Env</h2>
+    <p>Please set the following environment variables.</p>
+    <% @list.each do |x| %>
+    <div>
+      <h2><%= x[:label] %></h2>
+      <table class="pure-table">
+        <thead>
+          <tr>
+            <th>VARIABLE</th>
+            <th>STATUS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% x[:list].each do |y| %>
+          <tr>
+            <td><%= y[:name] %></td>
+            <td><%= y[:status] ? "OK" : "Not Set" %></td>
+          </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <% end %>
+  </div>
 </div>
 </body>
 </html>
