@@ -123,12 +123,24 @@ def tweet(twitter_client, content)
   twitter_client.update(content)
 end
 
+def datetime_string?(s)
+  begin
+    DateTime.parse(s)
+    true
+  rescue
+    false
+  end
+end
+
 def read_previous_created_at(twitter_client)
   timeline = twitter_client.home_timeline
-  if timeline.empty?
+  github_tweet = timeline.find {|tweet|
+    datetime_string? tweet.text.split(' ').first
+  }
+  if github_tweet.nil?
     '2000-01-01T00:00:00Z'
   else
-    timeline.first.text.split(' ').first
+    github_tweet.text.split(' ').first
   end
 end
 
